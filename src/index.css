@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Griffy&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --vw: 100vw;
+}
+
+.griffy-regular {
+  font-family: "Griffy", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+body {
+  font-family: "Instrument Sans", sans-serif;
+  font-optical-sizing: auto;
+}
+
+@theme {
+  --color-brand: #F5008B;
+  --color-gray: #333333;
+  --color-light-gray: #ACACAC;
+}
+
+
+/* h1 {
+  font-size: calc(100vw * (96 / 1440));
+}
+
+h2 {
+  font-size: calc(100vw * (40 / 1440));
+}
+
+p {
+  font-size: calc(100vw * (20 / 1440));
+}
+
+p.lg {
+  font-size: calc(100vw * (24 / 1440));
+}
+
+@media screen and (min-width: 480px) {
+  h1 {
+    font-size: calc(100vw * (40 / 750));
+  }
+
+  h2 {
+    font-size: calc(100vw * (40 / 750));
+  }
+
+  p {
+    font-size: calc(100vw * (20 / 750));
+  }
+
+  p.lg {
+    font-size: calc(100vw * (24 / 750));
+  }
+} */
