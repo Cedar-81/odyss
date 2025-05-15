@@ -13,7 +13,7 @@ function App() {
           alt="map route image"
         />
         <div className="relative space-y-4 px-8 top-[50%] h-min flex flex-col justify-center items-center -translate-y-[50%]">
-          <h1 className="lg:w-[60%] leading-tight text-4xl lg:text-7xl text-center">
+          <h1 className="lg:w-[60%] leading-tight font-bold text-4xl lg:text-7xl text-center">
             Cut costs on your next inter-city trip with{" "}
             <br className="hidden lg:block" />
             <span className="griffy-regular text-brand">Odyss</span>
@@ -98,13 +98,13 @@ function App() {
           <div className="w-full max-w-md">
             <div className="flex flex-col justify-center items-center gap-4 w-full">
               <input
-                placeholder="from"
+                placeholder="from-> eg. Enugu"
                 type="text"
                 className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
               />
               <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
               <input
-                placeholder="to"
+                placeholder="to-> eg. Abuja"
                 type="text"
                 className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
               />
