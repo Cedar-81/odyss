@@ -52,7 +52,7 @@ function App() {
 
       <section
         id="trip"
-        className="my-32 flex flex-col justify-center gap-20 px-4"
+        className="my-32 flex flex-col justify-center gap-20 px-10"
       >
         <div className="flex mx-auto border border-brand rounded-lg overflow-clip w-max">
           <button
