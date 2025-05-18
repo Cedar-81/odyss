@@ -1,19 +1,16 @@
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../store";
-import { setShowAuth } from "../store/authSlice";
+"use client"
+
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "../store"
+import { setShowAuth, logoutUser } from "../store/authSlice"
 
 function Navbar() {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch<AppDispatch>()
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+
   return (
     <nav className="h-[5rem] top-0 right-0 flex justify-between items-center w-[100vw] z-10 border-b border-b-brand px-6 lg:px-20 fixed bg-white">
-      <svg
-        // width="416"
-        // height="127"
-        viewBox="0 0 416 127"
-        fill="none"
-        className="h-8"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg viewBox="0 0 416 127" fill="none" className="h-8" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M413.997 45.9793L395.121 47.1408C394.798 45.5275 394.105 44.0756 393.04 42.7849C391.975 41.462 390.572 40.4134 388.829 39.639C387.119 38.8323 385.07 38.429 382.683 38.429C379.488 38.429 376.794 39.1066 374.6 40.4618C372.406 41.7847 371.309 43.5593 371.309 45.7857C371.309 47.5603 372.019 49.0607 373.438 50.2868C374.858 51.5129 377.294 52.497 380.747 53.2391L394.202 55.9495C401.429 57.4337 406.818 59.8214 410.367 63.1125C413.916 66.4036 415.691 70.7273 415.691 76.0834C415.691 80.9556 414.255 85.2309 411.383 88.9092C408.544 92.5875 404.64 95.4592 399.671 97.5242C394.734 99.557 389.039 100.573 382.586 100.573C372.745 100.573 364.904 98.5245 359.064 94.4267C353.256 90.2966 349.852 84.6823 348.852 77.5838L369.131 76.519C369.744 79.5198 371.228 81.8107 373.584 83.3917C375.939 84.9405 378.956 85.7148 382.634 85.7148C386.248 85.7148 389.152 85.0211 391.346 83.6337C393.572 82.214 394.702 80.391 394.734 78.1646C394.702 76.2932 393.911 74.7605 392.362 73.5667C390.814 72.3406 388.426 71.4049 385.199 70.7596L372.325 68.1944C365.065 66.7424 359.661 64.2257 356.112 60.6442C352.595 57.0626 350.836 52.497 350.836 46.9472C350.836 42.1719 352.127 38.0579 354.708 34.6055C357.322 31.153 360.984 28.4911 365.695 26.6196C370.438 24.7482 375.987 23.8125 382.344 23.8125C391.733 23.8125 399.122 25.7969 404.511 29.7656C409.931 33.7343 413.093 39.1389 413.997 45.9793Z"
           fill="#F5008B"
@@ -44,14 +41,34 @@ function Navbar() {
         />
       </svg>
 
-      <button
-        onClick={() => dispatch(setShowAuth("signup"))}
-        className="w-max px-8 text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
-      >
-        Register
-      </button>
+      {isAuthenticated ? (
+        <div className="flex items-center gap-4">
+          <span className="text-sm">Welcome, {user?.firstName}</span>
+          <button
+            onClick={() => dispatch(logoutUser())}
+            className="w-max px-4 text-base sm:text-lg py-1 rounded-lg cursor-pointer border border-brand text-brand"
+          >
+            Logout
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            onClick={() => dispatch(setShowAuth("signin"))}
+            className="w-max px-4 text-base sm:text-lg py-1 rounded-lg cursor-pointer border border-brand text-brand"
+          >
+            Login
+          </button>
+          <button
+            onClick={() => dispatch(setShowAuth("signup"))}
+            className="w-max px-8 text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
+          >
+            Register
+          </button>
+        </div>
+      )}
     </nav>
-  );
+  )
 }
 
-export default Navbar;
+export default Navbar
