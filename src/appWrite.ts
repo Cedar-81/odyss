@@ -4,7 +4,7 @@ import { Client, Account, Databases, ID, Query } from "appwrite"
 export const client = new Client()
 
 client
-  .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1")
+  .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1")
   .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID || "")
 
 // Initialize Appwrite services
@@ -20,5 +20,10 @@ export const COLLECTIONS = {
   TRIPS: import.meta.env.VITE_APPWRITE_TRIPS_COLLECTION_ID || "",
   USERS: import.meta.env.VITE_APPWRITE_USERS_COLLECTION_ID || "",
 }
+
+console.log(import.meta.env.VITE_APPWRITE_ENDPOINT)
+console.log(import.meta.env.VITE_APPWRITE_PROJECT_ID)
+console.log(DATABASES.MAIN, COLLECTIONS.USERS)
+
 
 export { ID, Query }
