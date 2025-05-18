@@ -1,0 +1,45 @@
+version: '3.4'
+
+services:
+  appwrite:
+    image: appwrite/appwrite:1.4.11
+    container_name: appwrite
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - mariadb
+      - redis
+    environment:
+      - _APP_ENV=development
+      - _APP_OPENSSL_KEY_V1=4f088204ff0555e771564063cbe8705702645edce4102ed2529fd21c433a98b2
+      - _APP_DOMAIN=localhost
+      - _APP_DOMAIN_TARGET=localhost
+      - _APP_DB_HOST=mariadb
+      - _APP_DB_USER=appwrite
+      - _APP_DB_PASS=appwritepassword
+      - _APP_REDIS_HOST=redis
+      - _APP_STORAGE_LIMIT=1000000000
+      - _APP_USAGE_STATS=false
+      - _APP_DB_SCHEMA=appwrite
+    volumes:
+      - ./appwrite:/storage:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  mariadb:
+    image: mariadb:10.5
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=appwrite
+      - MYSQL_USER=appwrite
+      - MYSQL_PASSWORD=appwritepassword
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+
+volumes:
+  mariadb_data:

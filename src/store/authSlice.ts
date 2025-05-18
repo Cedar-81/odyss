@@ -7,6 +7,15 @@ import {
   ID,
   Query,
 } from "../appWrite";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import {
+  account,
+  databases,
+  DATABASES,
+  COLLECTIONS,
+  ID,
+  Query,
+} from "../appWrite";
 
 // Define types
 interface User {
@@ -95,7 +104,7 @@ export const registerUser = createAsyncThunk(
         lastName,
         phoneNumber,
       };
-    } catch (error:any) {
+    } catch (error) {
       return rejectWithValue(error.message);
     }
   }
@@ -134,7 +143,7 @@ export const loginUser = createAsyncThunk(
         lastName: userData.lastName,
         phoneNumber: userData.phoneNumber,
       };
-    } catch (error: any) {
+    } catch (error) {
       return rejectWithValue(error.message);
     }
   }
@@ -146,7 +155,7 @@ export const logoutUser = createAsyncThunk(
     try {
       await account.deleteSession("current");
       return null;
-    } catch (error:any) {
+    } catch (error) {
       return rejectWithValue(error.message);
     }
   }
