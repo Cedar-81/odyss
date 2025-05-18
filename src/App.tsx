@@ -1,11 +1,24 @@
 import { useState } from "react";
 import "./App.css";
 import clsx from "clsx";
+import Signup from "./components/Signup";
+import Signin from "./components/Signin";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "./store";
+import { updateTripField } from "./store/tripSlice";
+import Navbar from "./components/Navbar";
+import Trips from "./components/Trips";
 
 function App() {
   const [findATrip, setFindATrip] = useState(true);
+  const trip = useSelector((state: RootState) => state.trip);
+  const auth = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
   return (
     <main>
+      <Navbar />
+      {auth.showAuth == "signup" && <Signup />}
+      {auth.showAuth == "signin" && <Signin />}
       <section className="h-[100vh] flex justify-center w-[100vw] relative overflow-clip">
         <img
           src="./assets/herobkg.png"
@@ -77,7 +90,7 @@ function App() {
 
         <div className="flex flex-col lg:flex-row justify-between items-center lg:items-start w-full max-w-6xl mx-auto gap-10">
           <div className="space-y-4 text-center lg:text-left">
-            <h3 className="text-2xl sm:text-3xl">
+            <h3 className="text-2xl sm:text-3xl font-medium">
               {findATrip ? "Find a trip" : "Create a trip"}
             </h3>
             {findATrip ? (
@@ -98,23 +111,75 @@ function App() {
           <div className="w-full max-w-md">
             <div className="flex flex-col justify-center items-center gap-4 w-full">
               <input
-                placeholder="from-> eg. Enugu"
+                placeholder="from -> eg. Enugu"
                 type="text"
+                value={trip.origin}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({ field: "origin", value: e.target.value })
+                  )
+                }
                 className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
               />
               <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
               <input
-                placeholder="to-> eg. Abuja"
+                placeholder="to -> eg. Abuja"
                 type="text"
+                value={trip.destination}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({
+                      field: "destination",
+                      value: e.target.value,
+                    })
+                  )
+                }
                 className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
               />
               <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
               <input
                 placeholder="date"
                 type="date"
+                value={trip.tripDate}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({
+                      field: "tripDate",
+                      value: e.target.value,
+                    })
+                  )
+                }
                 className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
               />
+              {/* <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
+              <input
+                placeholder="phone number"
+                type="tel"
+                value={trip.phoneNumber}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({
+                      field: "phoneNumber",
+                      value: e.target.value,
+                    })
+                  )
+                }
+                className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
+              />
+              <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
+              <input
+                placeholder="email"
+                type="email"
+                value={trip.email}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({ field: "email", value: e.target.value })
+                  )
+                }
+                className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
+              /> */}
             </div>
+
             <button
               disabled
               className="w-max px-8 float-right mt-6 text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
@@ -124,6 +189,8 @@ function App() {
             </button>
           </div>
         </div>
+
+        <Trips />
       </section>
     </main>
   );
