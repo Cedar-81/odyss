@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import type { AppDispatch, RootState } from "../store"
-import { registerUser, setShowAuth } from "../store/authSlice"
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../store";
+import { registerUser, setShowAuth } from "../store/authSlice";
 
 function Signup() {
-  const dispatch = useDispatch<AppDispatch>()
-  const { isLoading, error } = useSelector((state: RootState) => state.auth)
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -17,33 +17,36 @@ function Signup() {
     email: "",
     phoneNumber: "",
     password: "",
-  })
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    dispatch(registerUser(formData))
-  }
+    e.preventDefault();
+    dispatch(registerUser(formData));
+  };
 
   const closeModal = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLDivElement).classList.contains("modal-overlay")) {
-      dispatch(setShowAuth(null))
+      dispatch(setShowAuth(null));
     }
-  }
+  };
 
   return (
     <div
       className="fixed h-[100vh] w-[100vw] top-0 right-0 shadow-lg bg-black/40 z-30 flex justify-center items-center modal-overlay"
       onClick={closeModal}
     >
-      <form onSubmit={handleSubmit} className="w-[25rem] h-max rounded-md bg-white space-y-6 p-8">
-        <h1 className="text-3xl">Create an account</h1>
+      <form
+        onSubmit={handleSubmit}
+        className="w-[90%] max-h-[40rem] overflow-y-auto lg:w-[25rem] h-max rounded-md bg-white space-y-6 p-8"
+      >
+        <h1 className="text-2xl">Create an account</h1>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
@@ -118,23 +121,29 @@ function Signup() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-max px-8 float-right text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
-        >
-          {isLoading ? "Creating..." : "Create account"}
-        </button>
-
-        <p className="text-sm mt-4 pt-4 text-center">
-          Already have an account?{" "}
-          <button type="button" onClick={() => dispatch(setShowAuth("signin"))} className="text-brand cursor-pointer">
-            Sign in
+        <div className="flex flex-col space-y-2">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-max px-8 float-right text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
+          >
+            {isLoading ? "Creating..." : "Create account"}
           </button>
-        </p>
+
+          <p className="text-sm text-left">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => dispatch(setShowAuth("signin"))}
+              className="text-brand cursor-pointer"
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
       </form>
     </div>
-  )
+  );
 }
 
-export default Signup
+export default Signup;

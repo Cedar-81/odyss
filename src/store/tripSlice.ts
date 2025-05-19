@@ -1,23 +1,23 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { databases, DATABASES, COLLECTIONS, ID, Query } from "../appWrite"
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { supabase } from "../supabaseClient"; // your supabase client import
 
 // Define types
 interface Trip {
-  $id?: string
-  userId: string
-  origin: string
-  destination: string
-  tripDate: string
-  createdAt?: string
+  id?: string;
+  userId: string;
+  origin: string;
+  destination: string;
+  tripDate: string;
+  createdAt?: string;
 }
 
 interface TripState {
-  trips: Trip[]
-  origin: string
-  destination: string
-  tripDate: string
-  isLoading: boolean
-  error: string | null
+  trips: Trip[];
+  origin: string;
+  destination: string;
+  tripDate: string;
+  isLoading: boolean;
+  error: string | null;
 }
 
 // Initial state
@@ -28,75 +28,128 @@ const initialState: TripState = {
   tripDate: "",
   isLoading: false,
   error: null,
-}
+};
 
 // Async thunks
+
 export const createTrip = createAsyncThunk(
   "trip/create",
   async (
     {
-      userId,
       origin,
       destination,
       tripDate,
-    }: { userId: string; origin: string; destination: string; tripDate: string },
-    { rejectWithValue },
+    }: {
+      origin: string;
+      destination: string;
+      tripDate: string;
+    },
+    { rejectWithValue }
   ) => {
     try {
-      const trip = await databases.createDocument(DATABASES.MAIN, COLLECTIONS.TRIPS, ID.unique(), {
-        userId,
-        origin,
-        destination,
-        tripDate,
-        createdAt: new Date().toISOString(),
-      })
+      const authUser = await supabase.auth.getUser();
+      const authUserId = authUser.data.user?.id;
 
-      return trip
-    } catch (error: any) {
-      return rejectWithValue(error.message)
+      if (!authUserId) throw new Error("User not authenticated");
+
+      // Fetch the user row from Users table using authUserId
+      const { data: usersData, error: usersError } = await supabase
+        .from("Users")
+        .select("id")
+        .eq("userId", authUserId)
+        .single();
+
+      if (usersError || !usersData) throw new Error("User record not found");
+
+      const userId = usersData.id;
+
+      const { data, error } = await supabase
+        .from("Trips")
+        .insert([
+          {
+            userId,
+            origin,
+            destination,
+            tripDate,
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      return data;
+    } catch (error) {
+      console.log("error: ", ((error as unknown) as any).message);
+      return rejectWithValue(((error as unknown) as any).message);
     }
-  },
-)
-
-export const fetchTrips = createAsyncThunk("trip/fetchAll", async (_, { rejectWithValue }) => {
-  try {
-    const response = await databases.listDocuments(DATABASES.MAIN, COLLECTIONS.TRIPS, [Query.orderDesc("createdAt")])
-
-    return response.documents
-  } catch (error: any) {
-    return rejectWithValue(error.message)
   }
-})
+);
+
+export const fetchTrips = createAsyncThunk(
+  "trip/fetchAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data, error } = await supabase
+        .from("Trips")
+        .select(
+          `*,
+          userId(phoneNumber)
+        `
+        )
+        .order("created_at", { ascending: false });
+
+      console.log("initi trip: ", data);
+
+      if (error) throw new Error(((error as unknown) as any).message);
+
+      const tripsWithPhone = data.map((trip) => ({
+        ...trip,
+        phoneNumber: trip.Users?.phoneNumber || null,
+      }));
+
+      return tripsWithPhone;
+    } catch (error) {
+      console.log("fetch trips err: ", error);
+      return rejectWithValue(((error as unknown) as any).message);
+    }
+  }
+);
 
 export const findTrips = createAsyncThunk(
   "trip/find",
   async (
-    { origin, destination, tripDate }: { origin: string; destination: string; tripDate: string },
-    { rejectWithValue },
+    {
+      origin,
+      destination,
+      tripDate,
+    }: { origin: string; destination: string; tripDate: string },
+    { rejectWithValue }
   ) => {
     try {
-      const queries = []
+      let query = supabase.from("Trips").select("*");
 
       if (origin) {
-        queries.push(Query.equal("origin", origin))
+        query = query.eq("origin", origin);
       }
-
       if (destination) {
-        queries.push(Query.equal("destination", destination))
+        query = query.eq("destination", destination);
       }
-
       if (tripDate) {
-        queries.push(Query.equal("tripDate", tripDate))
+        query = query.eq("tripDate", tripDate);
       }
 
-      const response = await databases.listDocuments(DATABASES.MAIN, COLLECTIONS.TRIPS, queries)
+      const { data, error } = await query;
 
-      return response.documents
-    } catch (error: any) {
-      return rejectWithValue(error.message)
+      if (error) throw new Error(error.message);
+
+      return data;
+    } catch (error) {
+      console.log("findTrips err", error);
+      return rejectWithValue(((error as unknown) as any).message);
     }
-  },
-)
+  }
+);
 
 // Trip slice
 const tripSlice = createSlice({
@@ -104,61 +157,64 @@ const tripSlice = createSlice({
   initialState,
   reducers: {
     updateTripField: (state, action) => {
-      const { field, value } = action.payload
-      state[field as keyof Pick<TripState, "origin" | "destination" | "tripDate">] = value
+      const { field, value } = action.payload;
+      state[
+        field as keyof Pick<TripState, "origin" | "destination" | "tripDate">
+      ] = value;
     },
     clearTripForm: (state) => {
-      state.origin = ""
-      state.destination = ""
-      state.tripDate = ""
+      state.origin = "";
+      state.destination = "";
+      state.tripDate = "";
     },
   },
   extraReducers: (builder) => {
     builder
       // Create trip
       .addCase(createTrip.pending, (state) => {
-        state.isLoading = true
-        state.error = null
+        state.isLoading = true;
+        state.error = null;
       })
       .addCase(createTrip.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.trips.unshift(action.payload)
-        state.origin = ""
-        state.destination = ""
-        state.tripDate = ""
+        state.isLoading = false;
+        //@ts-ignore
+        state.trips.unshift(action.payload);
+        state.origin = "";
+        state.destination = "";
+        state.tripDate = "";
       })
       .addCase(createTrip.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload as string
+        state.isLoading = false;
+        state.error = action.payload as string;
       })
       // Fetch trips
       .addCase(fetchTrips.pending, (state) => {
-        state.isLoading = true
-        state.error = null
+        state.isLoading = true;
+        state.error = null;
       })
       .addCase(fetchTrips.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.trips = action.payload
+        state.isLoading = false;
+        state.trips = action.payload || [];
       })
       .addCase(fetchTrips.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload as string
+        state.isLoading = false;
+        state.error = action.payload as string;
       })
       // Find trips
       .addCase(findTrips.pending, (state) => {
-        state.isLoading = true
-        state.error = null
+        state.isLoading = true;
+        state.error = null;
       })
       .addCase(findTrips.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.trips = action.payload
+        state.isLoading = false;
+        state.trips = action.payload || [];
       })
       .addCase(findTrips.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload as string
-      })
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
   },
-})
+});
 
-export const { updateTripField, clearTripForm } = tripSlice.actions
-export default tripSlice.reducer
+export const { updateTripField, clearTripForm } = tripSlice.actions;
+export default tripSlice.reducer;

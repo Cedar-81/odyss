@@ -1,25 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  account,
-  databases,
-  DATABASES,
-  COLLECTIONS,
-  ID,
-  Query,
-} from "../appWrite";
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  account,
-  databases,
-  DATABASES,
-  COLLECTIONS,
-  ID,
-  Query,
-} from "../appWrite";
+import { supabase } from "../supabaseClient"; // import your Supabase client
 
 // Define types
 interface User {
-  $id: string;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -43,7 +27,7 @@ const initialState: AuthState = {
   showAuth: null,
 };
 
-// Async thunks
+// Register user
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (
@@ -63,53 +47,53 @@ export const registerUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      console.log("creating account");
-      // Create account
-      const newAccount = await account.create(
-        ID.unique(),
+      // 1. Sign up the user without triggering verification email
+      const {
+        data: signUpData,
+        error: signUpError,
+      } = await supabase.auth.signUp({
         email,
         password,
-        `${firstName} ${lastName}`
-      );
+        options: {
+          emailRedirectTo: undefined, // prevent redirect email? (optional)
+          // OR configure Supabase to disable confirmation email globally
+        },
+      });
 
-      console.log("new account details: ", newAccount);
+      if (signUpError) throw new Error(signUpError.message);
 
-      // Create session
-      await account.createEmailPasswordSession(email, password);
+      const userId = signUpData.user?.id;
 
-      // // Get account
-      const accountDetails = await account.get();
-
-      console.log("account details: ", accountDetails);
-
-      // Store additional user data in database
-      const userData = await databases.createDocument(
-        DATABASES.MAIN,
-        COLLECTIONS.USERS,
-        newAccount.$id,
+      // 2. Insert user profile with averified = false
+      const { error: insertError } = await supabase.from("Users").insert([
         {
-          userId: newAccount.$id,
+          userId,
           email,
           firstName,
           lastName,
           phoneNumber,
-        }
-      );
-      console.log("account details: ", userData);
+          verified: false, // explicitly set this field
+        },
+      ]);
 
+      if (insertError) throw new Error(insertError.message);
+
+      // 3. Return user info
       return {
-        $id: newAccount.$id,
+        id: userId,
         email,
         firstName,
         lastName,
         phoneNumber,
+        verified: false,
       };
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(((error as unknown) as any).message);
     }
   }
 );
 
+// Login user
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (
@@ -117,83 +101,94 @@ export const loginUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      // Create session
-      await account.createEmailPasswordSession(email, password);
+      // 1. Sign in with email/password
+      const {
+        data: loginData,
+        error: loginError,
+      } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // Get account
-      const accountDetails = await account.get();
-
-      // Get user data from database
-      const users = await databases.listDocuments(
-        DATABASES.MAIN,
-        COLLECTIONS.USERS,
-        [Query.equal("userId", accountDetails.$id)]
-      );
-
-      if (users.documents.length === 0) {
-        throw new Error("User data not found");
+      if (loginError || !loginData.user) {
+        throw new Error(loginError?.message || "Login failed");
       }
 
-      const userData = users.documents[0];
+      const userId = loginData.user.id;
+
+      // 2. Get user profile from `Users` table
+      const { data: users, error: fetchError } = await supabase
+        .from("Users")
+        .select("*")
+        .eq("userId", userId)
+        .single();
+
+      if (fetchError || !users) {
+        throw new Error("User profile not found");
+      }
 
       return {
-        $id: accountDetails.$id,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phoneNumber: userData.phoneNumber,
+        id: userId,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        phoneNumber: users.phoneNumber,
       };
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(((error as unknown) as any).message);
     }
   }
 );
 
+// Logout user
 export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await account.deleteSession("current");
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       return null;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(((error as unknown) as any).message);
     }
   }
 );
 
+// Check auth status
 export const checkAuthStatus = createAsyncThunk(
   "auth/checkStatus",
   async (_, { rejectWithValue }) => {
     try {
-      // Get current session
-      const session = await account.getSession("current");
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
-      // Get account
-      const accountDetails = await account.get();
-
-      // Get user data from database
-      const users = await databases.listDocuments(
-        DATABASES.MAIN,
-        COLLECTIONS.USERS,
-        [Query.equal("userId", accountDetails.$id)]
-      );
-
-      if (users.documents.length === 0) {
-        throw new Error("User data not found");
+      if (error || !session?.user) {
+        throw new Error("No active session");
       }
 
-      const userData = users.documents[0];
+      const userId = session.user.id;
+
+      const { data: userData, error: userError } = await supabase
+        .from("Users")
+        .select("*")
+        .eq("userId", userId)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error("User profile not found");
+      }
 
       return {
-        $id: accountDetails.$id,
+        id: userId,
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
         phoneNumber: userData.phoneNumber,
       };
     } catch (error) {
-      // Not authenticated
-      return rejectWithValue("Not authenticated");
+      return rejectWithValue(((error as unknown) as any).message);
     }
   }
 );
@@ -212,7 +207,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Register
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -220,6 +214,7 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = true;
+        //@ts-ignore
         state.user = action.payload;
         state.showAuth = null;
       })
@@ -227,7 +222,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Login
+
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -242,7 +237,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Logout
+
       .addCase(logoutUser.pending, (state) => {
         state.isLoading = true;
       })
@@ -255,7 +250,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Check auth status
+
       .addCase(checkAuthStatus.pending, (state) => {
         state.isLoading = true;
       })
