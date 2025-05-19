@@ -16,6 +16,7 @@ import Trips from "./components/Trips";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ResetPassword from "./components/ResetPassword";
 import VerifyEmail from "./components/VerifyEmail";
+import FloatingChat from "./components/FloatingChat";
 
 function MainApp() {
   const [findATrip, setFindATrip] = useState(true);
@@ -65,6 +66,7 @@ function MainApp() {
   return (
     <main>
       <Navbar />
+      <FloatingChat />
       {auth.showAuth === "signup" && <Signup />}
       {auth.showAuth === "signin" && <Signin />}
       {auth.showAuth === "forgotPassword" && <ForgotPassword />}

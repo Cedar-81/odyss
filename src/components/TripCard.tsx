@@ -45,13 +45,13 @@ function TripCard({
       </div>
 
       <div className="flex justify-between gap-8 items-center">
-        <h3 className="text-2xl">{origin}</h3>
+        <h3 className="text-xl">{origin}</h3>
         <svg
           width="61"
           height="29"
           viewBox="0 0 61 29"
           fill="none"
-          className="h-3"
+          className="h-3 min-h-3 min-w-max"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -59,13 +59,17 @@ function TripCard({
             fill="black"
           />
         </svg>
-        <h3 className="text-2xl">{destination}</h3>
+        <h3 className="text-xl">{destination}</h3>
       </div>
 
-      <a target="_blank" href={`https://wa.me/${phoneNumber.slice(1)}`}>
+      <a
+        target="_blank"
+        href={phoneNumber ? `https://wa.me/${phoneNumber.slice(1)}` : ""}
+      >
         <button
           onClick={onBook}
-          className="w-max px-8 float-right text-xs lg:text-base py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
+          disabled={!phoneNumber}
+          className="w-max disabled:bg-gray px-8 float-right text-xs lg:text-base py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
         >
           Book trip
         </button>

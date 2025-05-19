@@ -50,11 +50,21 @@ export const createTrip = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      //get Users id using auth user id
+      const { data: users, error: usersError } = await supabase
+        .from("Users")
+        .select()
+        .eq("userId", userId);
+
+      if (usersError) {
+        throw new Error("User data not found");
+      }
+
       const newTrip = {
-        user_id: userId,
+        userId: users[0].id,
         origin,
         destination,
-        trip_date: tripDate,
+        tripDate,
       };
 
       const { data, error } = await supabase
@@ -67,6 +77,7 @@ export const createTrip = createAsyncThunk(
 
       return data;
     } catch (error) {
+      console.log("Create trip err: ", error);
       return rejectWithValue(((error as unknown) as any).message);
     }
   }
