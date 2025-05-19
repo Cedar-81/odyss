@@ -4,14 +4,50 @@ export default function FloatingChat() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  // const [sending, setSending] = useState(false);
 
-  const handleSubmit = () => {
-    // Replace this with real submission logic
-    console.log("Email:", email);
-    console.log("Message:", message);
-    setEmail("");
-    setMessage("");
-    setOpen(false);
+  const handleSubmit = async () => {
+    console.log("hello world");
+    // setSending(true);
+    // if (!email || !message) {
+    //   alert("Please fill in both fields.");
+    //   setSending(false);
+    //   return;
+    // }
+
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // if (!emailRegex.test(email)) {
+    //   alert("Please enter a valid email address.");
+    //   setSending(false);
+    //   return;
+    // }
+
+    // try {
+    //   const response = await fetch(
+    //     "https://odyss-mail-server.onrender.com/api/send-email",
+    //     {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({ email, message }),
+    //     }
+    //   );
+
+    //   if (response.ok) {
+    //     setSending(false);
+    //     alert("Message sent successfully!");
+    //     setEmail("");
+    //     setMessage("");
+    //     setOpen(false);
+    //   } else {
+    //     const res = await response.json();
+    //     alert("Failed to send message: " + res.error);
+    //     setSending(false);
+    //   }
+    // } catch (error) {
+    //   console.error(error);
+    //   setSending(false);
+    //   alert("Something went wrong.");
+    // }
   };
 
   return (
@@ -36,7 +72,8 @@ export default function FloatingChat() {
           />
           <button
             onClick={handleSubmit}
-            className="w-full cursor-pointer bg-brand text-white py-2 rounded hover:bg-brand-dark"
+            // disabled={sending}
+            className="w-full cursor-pointer disabled:bg-gray-300 bg-brand text-white py-2 rounded hover:bg-brand-dark"
           >
             Send
           </button>
