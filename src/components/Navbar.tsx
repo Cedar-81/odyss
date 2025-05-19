@@ -69,12 +69,26 @@ function Navbar() {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => dispatch(setShowAuth(true))}
-              className="text-brand hover:underline"
-            >
-              Login / Register
-            </button>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <button
+                onClick={() => {
+                  dispatch(setShowAuth("signin"));
+                  setSidebarOpen(false);
+                }}
+                className="px-8 text-base py-2 rounded-lg cursor-pointer border border-brand text-brand"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => {
+                  dispatch(setShowAuth("signup"));
+                  setSidebarOpen(false);
+                }}
+                className="px-8 text-base py-2 rounded-lg cursor-pointer bg-brand text-white"
+              >
+                Register
+              </button>
+            </div>
           )}
         </div>
 
@@ -156,7 +170,7 @@ function Navbar() {
               </button>
             </>
           ) : (
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-col lg:hidden gap-4">
               <button
                 onClick={() => {
                   dispatch(setShowAuth("signin"));
