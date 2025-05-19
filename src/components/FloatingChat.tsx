@@ -4,7 +4,7 @@ export default function FloatingChat() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
+  // const [sending, setSending] = useState(false);
 
   const handleSubmit = async () => {
     console.log("hello world");
@@ -72,7 +72,7 @@ export default function FloatingChat() {
           />
           <button
             onClick={handleSubmit}
-            disabled={sending}
+            // disabled={sending}
             className="w-full cursor-pointer disabled:bg-gray-300 bg-brand text-white py-2 rounded hover:bg-brand-dark"
           >
             Send
