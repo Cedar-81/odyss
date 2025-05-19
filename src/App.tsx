@@ -1,36 +1,36 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import "./App.css"
-import clsx from "clsx"
-import Signup from "./components/Signup"
-import Signin from "./components/Signin"
-import ForgotPassword from "./components/ForgotPassword"
-import EmailVerification from "./components/EmailVerification"
-import { useDispatch, useSelector } from "react-redux"
-import type { AppDispatch, RootState } from "./store"
-import { updateTripField, createTrip, findTrips } from "./store/tripSlice"
-import { checkAuthStatus, setShowAuth } from "./store/authSlice"
-import Navbar from "./components/Navbar"
-import Trips from "./components/Trips"
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import ResetPassword from "./components/ResetPassword"
-import VerifyEmail from "./components/VerifyEmail"
+import { useEffect, useState } from "react";
+import "./App.css";
+import clsx from "clsx";
+import Signup from "./components/Signup";
+import Signin from "./components/Signin";
+import ForgotPassword from "./components/ForgotPassword";
+import EmailVerification from "./components/EmailVerification";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "./store";
+import { updateTripField, createTrip, findTrips } from "./store/tripSlice";
+import { checkAuthStatus, setShowAuth } from "./store/authSlice";
+import Navbar from "./components/Navbar";
+import Trips from "./components/Trips";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ResetPassword from "./components/ResetPassword";
+import VerifyEmail from "./components/VerifyEmail";
 
 function MainApp() {
-  const [findATrip, setFindATrip] = useState(true)
-  const trip = useSelector((state: RootState) => state.trip)
-  const auth = useSelector((state: RootState) => state.auth)
-  const dispatch = useDispatch<AppDispatch>()
+  const [findATrip, setFindATrip] = useState(true);
+  const trip = useSelector((state: RootState) => state.trip);
+  const auth = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    dispatch(checkAuthStatus())
-  }, [dispatch])
+    dispatch(checkAuthStatus());
+  }, [dispatch]);
 
   const handleTripAction = () => {
     if (!auth.isAuthenticated) {
-      dispatch(setShowAuth("signin"))
-      return
+      dispatch(setShowAuth("signin"));
+      return;
     }
 
     if (findATrip) {
@@ -40,11 +40,11 @@ function MainApp() {
           origin: trip.origin,
           destination: trip.destination,
           tripDate: trip.tripDate,
-        }),
-      )
+        })
+      );
     } else {
       // Create trip
-      if (!auth.user) return
+      if (!auth.user) return;
 
       dispatch(
         createTrip({
@@ -52,15 +52,15 @@ function MainApp() {
           origin: trip.origin,
           destination: trip.destination,
           tripDate: trip.tripDate,
-        }),
-      )
+        })
+      );
     }
-  }
+  };
 
-  const isFormValid = trip.origin && trip.destination && trip.tripDate
+  const isFormValid = trip.origin && trip.destination && trip.tripDate;
 
   // Check if user email is verified - handle the case where user might be null
-  const isverified = auth.user?.verified ?? false
+  const isverified = auth.user?.verified ?? false;
 
   return (
     <main>
@@ -70,32 +70,42 @@ function MainApp() {
       {auth.showAuth === "forgotPassword" && <ForgotPassword />}
 
       <section className="h-[100vh] flex justify-center w-[100vw] relative overflow-clip">
-        <img src="./assets/herobkg.png" className="absolute object-cover h-full w-full" alt="map route image" />
+        <img
+          src="./assets/herobkg.png"
+          className="absolute object-cover h-full w-full"
+          alt="map route image"
+        />
         <div className="relative space-y-4 px-8 top-[50%] h-min flex flex-col justify-center items-center -translate-y-[50%]">
-          <h1 className="lg:w-[60%] leading-tight font-bold text-4xl lg:text-7xl text-center">
-            Cut costs on your next inter-city trip with <br className="hidden lg:block" />
+          <h1 className="lg:w-[60%] leading-tight font-medium text-4xl lg:text-7xl text-center">
+            Cut costs on your next inter-city trip with{" "}
+            <br className="hidden lg:block" />
             <span className="griffy-regular text-brand">Odyss</span>
           </h1>
           <p className="text-lg lg:text-2xl text-center">
-            Find and share costs with a <span className="text-brand font-medium">"travel buddy"</span>. It's simple and
+            Find and share costs with a{" "}
+            <span className="text-brand">"travel buddy"</span>. It's simple and
             easy.
           </p>
-          <div className="flex gap-6 mt-10">
+          <div className="flex flex-col lg:flex-row w-full justify-center items-center gap-6 mt-10">
             <button
               onClick={() => {
-                setFindATrip(false)
-                document.getElementById("trip")?.scrollIntoView({ behavior: "smooth" })
+                setFindATrip(false);
+                document
+                  .getElementById("trip")
+                  ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="w-[10rem] text-lg py-2 rounded-lg cursor-pointer bg-brand text-white"
+              className="w-full lg:w-[10rem] text-lg py-2 rounded-lg cursor-pointer bg-brand text-white"
             >
               Create a trip
             </button>
             <button
               onClick={() => {
-                setFindATrip(true)
-                document.getElementById("trip")?.scrollIntoView({ behavior: "smooth" })
+                setFindATrip(true);
+                document
+                  .getElementById("trip")
+                  ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="w-[10rem] text-brand rounded-lg cursor-pointer text-lg py-2 border border-brand"
+              className="w-full lg:w-[10rem] text-brand rounded-lg cursor-pointer text-lg py-2 border border-brand"
             >
               Find a trip
             </button>
@@ -103,15 +113,20 @@ function MainApp() {
         </div>
       </section>
 
-      <section id="trip" className="my-32 flex flex-col justify-center gap-20 px-10">
-        {auth.isAuthenticated && auth.user && !isverified && <EmailVerification />}
+      <section
+        id="trip"
+        className="my-32 flex flex-col justify-center gap-20 px-10"
+      >
+        {auth.isAuthenticated && auth.user && !isverified && (
+          <EmailVerification />
+        )}
 
         <div className="flex mx-auto border border-brand rounded-lg overflow-clip w-max">
           <button
             onClick={() => setFindATrip(false)}
             className={clsx(
               "w-max px-8 text-base lg:text-lg py-2 cursor-pointer",
-              !findATrip ? "bg-brand text-white" : "bg-transparent text-brand",
+              !findATrip ? "bg-brand text-white" : "bg-transparent text-brand"
             )}
           >
             Create a trip
@@ -120,7 +135,7 @@ function MainApp() {
             onClick={() => setFindATrip(true)}
             className={clsx(
               "w-max px-8 text-base lg:text-lg py-2 cursor-pointer",
-              findATrip ? "bg-brand text-white" : "bg-transparent text-brand",
+              findATrip ? "bg-brand text-white" : "bg-transparent text-brand"
             )}
           >
             Find a trip
@@ -129,7 +144,9 @@ function MainApp() {
 
         <div className="flex flex-col lg:flex-row justify-between items-center lg:items-start w-full max-w-6xl mx-auto gap-10">
           <div className="space-y-4 text-center lg:text-left">
-            <h3 className="text-2xl sm:text-3xl font-medium">{findATrip ? "Find a trip" : "Create a trip"}</h3>
+            <h3 className="text-2xl sm:text-3xl font-medium">
+              {findATrip ? "Find a trip" : "Create a trip"}
+            </h3>
             {findATrip ? (
               <p className="text-sm sm:text-base md:text-lg text-gray leading-tight">
                 Find the right travel companion for your next
@@ -152,7 +169,14 @@ function MainApp() {
                   placeholder="from -> eg. Enugu"
                   type="text"
                   value={trip.origin}
-                  onChange={(e) => dispatch(updateTripField({ field: "origin", value: e.target.value }))}
+                  onChange={(e) =>
+                    dispatch(
+                      updateTripField({
+                        field: "origin",
+                        value: e.target.value,
+                      })
+                    )
+                  }
                   className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
                 />
                 <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
@@ -165,7 +189,7 @@ function MainApp() {
                       updateTripField({
                         field: "destination",
                         value: e.target.value,
-                      }),
+                      })
                     )
                   }
                   className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
@@ -180,7 +204,7 @@ function MainApp() {
                       updateTripField({
                         field: "tripDate",
                         value: e.target.value,
-                      }),
+                      })
                     )
                   }
                   className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
@@ -214,19 +238,22 @@ function MainApp() {
             <button
               onClick={handleTripAction}
               disabled={
-                !auth.isAuthenticated || !isFormValid || trip.isLoading || (auth.isAuthenticated && !isverified)
+                !auth.isAuthenticated ||
+                !isFormValid ||
+                trip.isLoading ||
+                (auth.isAuthenticated && !isverified)
               }
               className="w-max px-8 float-right mt-6 text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
             >
               {!auth.isAuthenticated
                 ? "Login to continue"
                 : !isverified
-                  ? "Verify email first"
-                  : trip.isLoading
-                    ? "Processing..."
-                    : findATrip
-                      ? "Search"
-                      : "Create"}
+                ? "Verify email first"
+                : trip.isLoading
+                ? "Processing..."
+                : findATrip
+                ? "Search"
+                : "Create"}
             </button>
           </div>
         </div>
@@ -235,7 +262,9 @@ function MainApp() {
           <Trips />
         ) : (
           <div className="text-center py-10">
-            <p className="text-lg text-gray-500">Please sign in to view available trips</p>
+            <p className="text-lg text-gray-500">
+              Please sign in to view available trips
+            </p>
             <button
               onClick={() => dispatch(setShowAuth("signin"))}
               className="mt-4 px-8 text-base py-2 rounded-lg cursor-pointer bg-brand text-white"
@@ -246,7 +275,7 @@ function MainApp() {
         )}
       </section>
     </main>
-  )
+  );
 }
 
 function App() {
@@ -258,7 +287,7 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -4,10 +4,12 @@ import { supabase } from "../supabaseClient";
 // Define types
 interface Trip {
   id?: string;
-  user_id: string;
+  userId: {
+    phoneNumber: string;
+  };
   origin: string;
   destination: string;
-  trip_date: string;
+  tripDate: string;
   created_at?: string;
 }
 
@@ -65,7 +67,7 @@ export const createTrip = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(((error as unknown) as any).message);
     }
   }
 );
@@ -76,14 +78,16 @@ export const fetchTrips = createAsyncThunk(
     try {
       const { data, error } = await supabase
         .from("Trips")
-        .select("*")
+        .select("*, userId(phoneNumber)")
         .order("created_at", { ascending: false });
+
+      console.log("trips data: ", data);
 
       if (error) throw error;
 
       return data || [];
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(((error as unknown) as any).message);
     }
   }
 );
@@ -119,7 +123,7 @@ export const findTrips = createAsyncThunk(
 
       return data || [];
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(((error as unknown) as any).message);
     }
   }
 );
