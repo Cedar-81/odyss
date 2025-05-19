@@ -84,12 +84,12 @@ export const registerUser = createAsyncThunk(
       // Store additional user data in Supabase profiles table if needed
       // This is optional as we're already storing user metadata
       const { error: profileError } = await supabase.from("Users").insert({
-        id: authData.user.id,
+        userId: authData.user.id,
         email,
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: phoneNumber,
-        email_verified: false,
+        firstName,
+        lastName,
+        phoneNumber,
+        verified: false,
       });
 
       if (profileError) {

@@ -4,11 +4,13 @@ import "./index.css";
 import App from "./App.tsx";
 import { Provider } from "react-redux";
 import { store } from "./store/index.ts";
+// import { Analytics } from "@vercel/analytics/next";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
       <App />
+      {/* <Analytics /> */}
     </Provider>
   </StrictMode>
 );
