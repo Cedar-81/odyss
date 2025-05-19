@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../store"
@@ -69,6 +68,16 @@ function Signin() {
             onChange={handleChange}
             required
           />
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => dispatch(setShowAuth("forgotPassword"))}
+            className="text-sm text-brand hover:underline"
+          >
+            Forgot password?
+          </button>
         </div>
 
         <button

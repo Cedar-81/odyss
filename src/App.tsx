@@ -5,14 +5,19 @@ import "./App.css"
 import clsx from "clsx"
 import Signup from "./components/Signup"
 import Signin from "./components/Signin"
+import ForgotPassword from "./components/ForgotPassword"
+import EmailVerification from "./components/EmailVerification"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "./store"
 import { updateTripField, createTrip, findTrips } from "./store/tripSlice"
 import { checkAuthStatus, setShowAuth } from "./store/authSlice"
 import Navbar from "./components/Navbar"
 import Trips from "./components/Trips"
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import ResetPassword from "./components/ResetPassword"
+import VerifyEmail from "./components/VerifyEmail"
 
-function App() {
+function MainApp() {
   const [findATrip, setFindATrip] = useState(true)
   const trip = useSelector((state: RootState) => state.trip)
   const auth = useSelector((state: RootState) => state.auth)
@@ -43,7 +48,7 @@ function App() {
 
       dispatch(
         createTrip({
-          userId: auth.user.$id,
+          userId: auth.user.id, // Changed from $id to id for Supabase
           origin: trip.origin,
           destination: trip.destination,
           tripDate: trip.tripDate,
@@ -54,11 +59,16 @@ function App() {
 
   const isFormValid = trip.origin && trip.destination && trip.tripDate
 
+  // Check if user email is verified - handle the case where user might be null
+  const isverified = auth.user?.verified ?? false
+
   return (
     <main>
       <Navbar />
       {auth.showAuth === "signup" && <Signup />}
       {auth.showAuth === "signin" && <Signin />}
+      {auth.showAuth === "forgotPassword" && <ForgotPassword />}
+
       <section className="h-[100vh] flex justify-center w-[100vw] relative overflow-clip">
         <img src="./assets/herobkg.png" className="absolute object-cover h-full w-full" alt="map route image" />
         <div className="relative space-y-4 px-8 top-[50%] h-min flex flex-col justify-center items-center -translate-y-[50%]">
@@ -94,6 +104,8 @@ function App() {
       </section>
 
       <section id="trip" className="my-32 flex flex-col justify-center gap-20 px-10">
+        {auth.isAuthenticated && auth.user && !isverified && <EmailVerification />}
+
         <div className="flex mx-auto border border-brand rounded-lg overflow-clip w-max">
           <button
             onClick={() => setFindATrip(false)}
@@ -201,16 +213,20 @@ function App() {
 
             <button
               onClick={handleTripAction}
-              disabled={!auth.isAuthenticated || !isFormValid || trip.isLoading}
+              disabled={
+                !auth.isAuthenticated || !isFormValid || trip.isLoading || (auth.isAuthenticated && !isverified)
+              }
               className="w-max px-8 float-right mt-6 text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
             >
               {!auth.isAuthenticated
                 ? "Login to continue"
-                : trip.isLoading
-                  ? "Processing..."
-                  : findATrip
-                    ? "Search"
-                    : "Create"}
+                : !isverified
+                  ? "Verify email first"
+                  : trip.isLoading
+                    ? "Processing..."
+                    : findATrip
+                      ? "Search"
+                      : "Create"}
             </button>
           </div>
         </div>
@@ -230,6 +246,18 @@ function App() {
         )}
       </section>
     </main>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainApp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+      </Routes>
+    </Router>
   )
 }
 

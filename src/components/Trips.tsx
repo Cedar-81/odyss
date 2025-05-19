@@ -45,7 +45,7 @@ function Trips() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {trips.map((trip) => (
-            <TripCard key={trip.$id} origin={trip.origin} destination={trip.destination} tripDate={trip.tripDate} />
+            <TripCard key={trip.id} origin={trip.origin} destination={trip.destination} tripDate={trip.trip_date} />
           ))}
         </div>
       )}

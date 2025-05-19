@@ -1,28 +1,27 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  account,
-  databases,
-  DATABASES,
-  COLLECTIONS,
-  ID,
-  Query,
-} from "../appWrite";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
+import { supabase } from "../supabaseClient"
+
+const appUrl = import.meta.env.VITE_APP_URL || "http://localhost:5173"
 
 // Define types
 interface User {
-  $id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phoneNumber: string
+  verified: boolean
 }
 
 interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  showAuth: "signup" | "signin" | null;
+  user: User | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  error: string | null
+  showAuth: "signup" | "signin" | "forgotPassword" | null
+  resetSuccess: boolean
+  verificationSent: boolean
+  verificationSuccess: boolean
 }
 
 // Initial state
@@ -32,7 +31,10 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   showAuth: null,
-};
+  resetSuccess: false,
+  verificationSent: false,
+  verificationSuccess: false,
+}
 
 // Async thunks
 export const registerUser = createAsyncThunk(
@@ -45,149 +47,194 @@ export const registerUser = createAsyncThunk(
       lastName,
       phoneNumber,
     }: {
-      email: string;
-      password: string;
-      firstName: string;
-      lastName: string;
-      phoneNumber: string;
+      email: string
+      password: string
+      firstName: string
+      lastName: string
+      phoneNumber: string
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
-      console.log("creating account");
-      // Create account
-      const newAccount = await account.create(
-        ID.unique(),
+      console.log("creating account")
+
+      // Create account with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        `${firstName} ${lastName}`
-      );
+        options: {
+          data: {
+            firstName,
+            lastName,
+            phoneNumber,
+            full_name: `${firstName} ${lastName}`,
+          },
+          emailRedirectTo: `${appUrl}/verify-email`,
+        },
+      })
 
-      console.log("new account details: ", newAccount);
+      if (authError) throw authError
 
-      // Create session
-      await account.createEmailPasswordSession(email, password);
+      console.log("new account details: ", authData)
 
-      // // Get account
-      const accountDetails = await account.get();
+      if (!authData.user) {
+        throw new Error("Failed to create user")
+      }
 
-      console.log("account details: ", accountDetails);
+      // Store additional user data in Supabase profiles table if needed
+      // This is optional as we're already storing user metadata
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: authData.user.id,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phoneNumber,
+        email_verified: false,
+      })
 
-      // Store additional user data in database
-      const userData = await databases.createDocument(
-        DATABASES.MAIN,
-        COLLECTIONS.USERS,
-        newAccount.$id,
-        {
-          userId: newAccount.$id,
-          email,
-          firstName,
-          lastName,
-          phoneNumber,
-        }
-      );
-      console.log("account details: ", userData);
+      if (profileError) {
+        console.error("Error creating profile:", profileError)
+        // We don't throw here because the auth was successful
+      }
 
       return {
-        $id: newAccount.$id,
+        id: authData.user.id,
         email,
         firstName,
         lastName,
         phoneNumber,
-      };
-    } catch (error:any) {
-      return rejectWithValue(error.message);
+        verified: false,
+      }
+    } catch (error: any) {
+      return rejectWithValue(error.message)
     }
-  }
-);
+  },
+)
 
 export const loginUser = createAsyncThunk(
   "auth/login",
+  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+    try {
+      // Sign in with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      if (!data.user) {
+        throw new Error("User data not found")
+      }
+
+      // Get user metadata
+      const firstName = data.user.user_metadata.firstName || ""
+      const lastName = data.user.user_metadata.lastName || ""
+      const phoneNumber = data.user.user_metadata.phoneNumber || ""
+
+      // Check if email is verified
+      const verified = data.user.email_confirmed_at !== null
+
+      return {
+        id: data.user.id,
+        email: data.user.email || "",
+        firstName,
+        lastName,
+        phoneNumber,
+        verified,
+      }
+    } catch (error: any) {
+      return rejectWithValue(error.message)
+    }
+  },
+)
+
+export const logoutUser = createAsyncThunk("auth/logout", async (_, { rejectWithValue }) => {
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    return null
+  } catch (error: any) {
+    return rejectWithValue(error.message)
+  }
+})
+
+export const checkAuthStatus = createAsyncThunk("auth/checkStatus", async (_, { rejectWithValue }) => {
+  try {
+    // Get current session
+    const { data, error } = await supabase.auth.getSession()
+
+    if (error) throw error
+
+    if (!data.session || !data.session.user) {
+      throw new Error("Not authenticated")
+    }
+
+    const user = data.session.user
+
+    // Get user metadata
+    const firstName = user.user_metadata.firstName || ""
+    const lastName = user.user_metadata.lastName || ""
+    const phoneNumber = user.user_metadata.phoneNumber || ""
+
+    // Check if email is verified
+    const verified = user.email_confirmed_at !== null
+
+    return {
+      id: user.id,
+      email: user.email || "",
+      firstName,
+      lastName,
+      phoneNumber,
+      verified,
+    }
+  } catch (error) {
+    // Not authenticated
+    return rejectWithValue("Not authenticated")
+  }
+})
+
+// New thunk for forgot password
+export const forgotPassword = createAsyncThunk("auth/forgotPassword", async (email: string, { rejectWithValue }) => {
+  try {
+    // Request password reset with Supabase
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${appUrl}/reset-password`,
+    })
+
+    if (error) throw error
+
+    return true
+  } catch (error: any) {
+    return rejectWithValue(error.message)
+  }
+})
+
+// New thunk for resetting password
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
   async (
-    { email, password }: { email: string; password: string },
-    { rejectWithValue }
+    {
+      password,
+    }: {
+      password: string
+    },
+    { rejectWithValue },
   ) => {
     try {
-      // Create session
-      await account.createEmailPasswordSession(email, password);
+      // With Supabase, we don't need userId and secret as they're handled by the session
+      const { error } = await supabase.auth.updateUser({
+        password,
+      })
 
-      // Get account
-      const accountDetails = await account.get();
+      if (error) throw error
 
-      // Get user data from database
-      const users = await databases.listDocuments(
-        DATABASES.MAIN,
-        COLLECTIONS.USERS,
-        [Query.equal("userId", accountDetails.$id)]
-      );
-
-      if (users.documents.length === 0) {
-        throw new Error("User data not found");
-      }
-
-      const userData = users.documents[0];
-
-      return {
-        $id: accountDetails.$id,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phoneNumber: userData.phoneNumber,
-      };
+      return true
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message)
     }
-  }
-);
-
-export const logoutUser = createAsyncThunk(
-  "auth/logout",
-  async (_, { rejectWithValue }) => {
-    try {
-      await account.deleteSession("current");
-      return null;
-    } catch (error:any) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const checkAuthStatus = createAsyncThunk(
-  "auth/checkStatus",
-  async (_, { rejectWithValue }) => {
-    try {
-      // Get current session
-      const session = await account.getSession("current");
-
-      // Get account
-      const accountDetails = await account.get();
-
-      // Get user data from database
-      const users = await databases.listDocuments(
-        DATABASES.MAIN,
-        COLLECTIONS.USERS,
-        [Query.equal("userId", accountDetails.$id)]
-      );
-
-      if (users.documents.length === 0) {
-        throw new Error("User data not found");
-      }
-
-      const userData = users.documents[0];
-
-      return {
-        $id: accountDetails.$id,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phoneNumber: userData.phoneNumber,
-      };
-    } catch (error) {
-      // Not authenticated
-      return rejectWithValue("Not authenticated");
-    }
-  }
-);
+  },
+)
 
 // Auth slice
 const authSlice = createSlice({
@@ -195,73 +242,117 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setShowAuth: (state, action) => {
-      state.showAuth = action.payload;
+      state.showAuth = action.payload
+      // Reset states when changing auth mode
+      state.resetSuccess = false
+      state.verificationSent = false
+      state.error = null
     },
     clearError: (state) => {
-      state.error = null;
+      state.error = null
+    },
+    clearResetSuccess: (state) => {
+      state.resetSuccess = false
+    },
+    clearVerificationStates: (state) => {
+      state.verificationSent = false
+      state.verificationSuccess = false
+    },
+    setVerificationSuccess: (state, action) => {
+      state.verificationSuccess = action.payload
     },
   },
   extraReducers: (builder) => {
     builder
       // Register
       .addCase(registerUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+        state.isLoading = true
+        state.error = null
       })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload;
-        state.showAuth = null;
+        state.isLoading = false
+        state.isAuthenticated = true
+        state.user = action.payload
+        state.showAuth = null
       })
       .addCase(registerUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
+        state.isLoading = false
+        state.error = action.payload as string
       })
       // Login
       .addCase(loginUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+        state.isLoading = true
+        state.error = null
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload;
-        state.showAuth = null;
+        state.isLoading = false
+        state.isAuthenticated = true
+        state.user = action.payload
+        state.showAuth = null
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
+        state.isLoading = false
+        state.error = action.payload as string
       })
       // Logout
       .addCase(logoutUser.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true
       })
       .addCase(logoutUser.fulfilled, (state) => {
-        state.isLoading = false;
-        state.isAuthenticated = false;
-        state.user = null;
+        state.isLoading = false
+        state.isAuthenticated = false
+        state.user = null
       })
       .addCase(logoutUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
+        state.isLoading = false
+        state.error = action.payload as string
       })
       // Check auth status
       .addCase(checkAuthStatus.pending, (state) => {
-        state.isLoading = true;
+        state.isLoading = true
       })
       .addCase(checkAuthStatus.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload;
+        state.isLoading = false
+        state.isAuthenticated = true
+        state.user = action.payload
       })
       .addCase(checkAuthStatus.rejected, (state) => {
-        state.isLoading = false;
-        state.isAuthenticated = false;
-        state.user = null;
-      });
+        state.isLoading = false
+        state.isAuthenticated = false
+        state.user = null
+      })
+      // Forgot password
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+        state.resetSuccess = false
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.isLoading = false
+        state.resetSuccess = true
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+      // Reset password
+      .addCase(resetPassword.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.isLoading = false
+        state.resetSuccess = true
+        state.showAuth = "signin" // Redirect to sign in after successful reset
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
   },
-});
+})
 
-export const { setShowAuth, clearError } = authSlice.actions;
-export default authSlice.reducer;
+export const { setShowAuth, clearError, clearResetSuccess, clearVerificationStates, setVerificationSuccess } =
+  authSlice.actions
+
+export default authSlice.reducer

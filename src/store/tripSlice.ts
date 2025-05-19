@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { databases, DATABASES, COLLECTIONS, ID, Query } from "../appWrite"
+import { supabase } from "../supabaseClient"
 
 // Define types
 interface Trip {
-  $id?: string
-  userId: string
+  id?: string
+  user_id: string
   origin: string
   destination: string
-  tripDate: string
-  createdAt?: string
+  trip_date: string
+  created_at?: string
 }
 
 interface TripState {
@@ -43,15 +43,18 @@ export const createTrip = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const trip = await databases.createDocument(DATABASES.MAIN, COLLECTIONS.TRIPS, ID.unique(), {
-        userId,
+      const newTrip = {
+        user_id: userId,
         origin,
         destination,
-        tripDate,
-        createdAt: new Date().toISOString(),
-      })
+        trip_date: tripDate,
+      }
 
-      return trip
+      const { data, error } = await supabase.from("trips").insert(newTrip).select().single()
+
+      if (error) throw error
+
+      return data
     } catch (error: any) {
       return rejectWithValue(error.message)
     }
@@ -60,9 +63,11 @@ export const createTrip = createAsyncThunk(
 
 export const fetchTrips = createAsyncThunk("trip/fetchAll", async (_, { rejectWithValue }) => {
   try {
-    const response = await databases.listDocuments(DATABASES.MAIN, COLLECTIONS.TRIPS, [Query.orderDesc("createdAt")])
+    const { data, error } = await supabase.from("trips").select("*").order("created_at", { ascending: false })
 
-    return response.documents
+    if (error) throw error
+
+    return data || []
   } catch (error: any) {
     return rejectWithValue(error.message)
   }
@@ -75,23 +80,25 @@ export const findTrips = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const queries = []
+      let query = supabase.from("trips").select("*")
 
       if (origin) {
-        queries.push(Query.equal("origin", origin))
+        query = query.eq("origin", origin)
       }
 
       if (destination) {
-        queries.push(Query.equal("destination", destination))
+        query = query.eq("destination", destination)
       }
 
       if (tripDate) {
-        queries.push(Query.equal("tripDate", tripDate))
+        query = query.eq("trip_date", tripDate)
       }
 
-      const response = await databases.listDocuments(DATABASES.MAIN, COLLECTIONS.TRIPS, queries)
+      const { data, error } = await query
 
-      return response.documents
+      if (error) throw error
+
+      return data || []
     } catch (error: any) {
       return rejectWithValue(error.message)
     }
