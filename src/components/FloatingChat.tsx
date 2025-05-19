@@ -7,46 +7,47 @@ export default function FloatingChat() {
   const [sending, setSending] = useState(false);
 
   const handleSubmit = async () => {
-    setSending(true);
-    if (!email || !message) {
-      alert("Please fill in both fields.");
-      setSending(false);
-      return;
-    }
+    console.log("hello world");
+    // setSending(true);
+    // if (!email || !message) {
+    //   alert("Please fill in both fields.");
+    //   setSending(false);
+    //   return;
+    // }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      alert("Please enter a valid email address.");
-      setSending(false);
-      return;
-    }
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // if (!emailRegex.test(email)) {
+    //   alert("Please enter a valid email address.");
+    //   setSending(false);
+    //   return;
+    // }
 
-    try {
-      const response = await fetch(
-        "https://odyss-mail-server.onrender.com/api/send-email",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, message }),
-        }
-      );
+    // try {
+    //   const response = await fetch(
+    //     "https://odyss-mail-server.onrender.com/api/send-email",
+    //     {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({ email, message }),
+    //     }
+    //   );
 
-      if (response.ok) {
-        setSending(false);
-        alert("Message sent successfully!");
-        setEmail("");
-        setMessage("");
-        setOpen(false);
-      } else {
-        const res = await response.json();
-        alert("Failed to send message: " + res.error);
-        setSending(false);
-      }
-    } catch (error) {
-      console.error(error);
-      setSending(false);
-      alert("Something went wrong.");
-    }
+    //   if (response.ok) {
+    //     setSending(false);
+    //     alert("Message sent successfully!");
+    //     setEmail("");
+    //     setMessage("");
+    //     setOpen(false);
+    //   } else {
+    //     const res = await response.json();
+    //     alert("Failed to send message: " + res.error);
+    //     setSending(false);
+    //   }
+    // } catch (error) {
+    //   console.error(error);
+    //   setSending(false);
+    //   alert("Something went wrong.");
+    // }
   };
 
   return (
