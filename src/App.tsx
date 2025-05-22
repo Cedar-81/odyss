@@ -17,16 +17,30 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ResetPassword from "./components/ResetPassword";
 import VerifyEmail from "./components/VerifyEmail";
 import FloatingChat from "./components/FloatingChat";
+import { useLocation } from "react-router-dom";
 
 function MainApp() {
   const [findATrip, setFindATrip] = useState(true);
   const trip = useSelector((state: RootState) => state.trip);
   const auth = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
 
   useEffect(() => {
     dispatch(checkAuthStatus());
   }, [dispatch]);
+
+  useEffect(() => {
+    const login = searchParams.get("login");
+    const signup = searchParams.get("signup");
+    if (login) {
+      dispatch(setShowAuth("signin"));
+    }
+    if (signup) {
+      dispatch(setShowAuth("signup"));
+    }
+  }, [location]);
 
   const handleTripAction = () => {
     if (!auth.isAuthenticated) {
@@ -209,7 +223,7 @@ function MainApp() {
                       })
                     )
                   }
-                  className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
+                  className="outline-none bg-white py-2 min-w-full w-full border border-light-gray px-3 rounded-lg"
                 />
               </div>
             ) : (
