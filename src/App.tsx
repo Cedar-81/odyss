@@ -223,7 +223,7 @@ function MainApp() {
                       })
                     )
                   }
-                  className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
+                  className="outline-none bg-white py-2 min-w-full w-full border border-light-gray px-3 rounded-lg"
                 />
               </div>
             ) : (
