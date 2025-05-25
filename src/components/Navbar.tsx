@@ -16,7 +16,7 @@ function Navbar() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
-    <>
+    <div className="h-[5rem] relative">
       {/* Navbar */}
       <nav className="h-[5rem] top-0 right-0 flex justify-between items-center w-full z-20 border-b border-b-brand px-6 lg:px-20 fixed bg-white">
         {/* Logo */}
@@ -193,7 +193,7 @@ function Navbar() {
           )}
         </div>
       </aside>
-    </>
+    </div>
   );
 }
 
