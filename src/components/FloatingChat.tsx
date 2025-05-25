@@ -1,26 +1,23 @@
 import { useState } from "react";
+import clsx from "clsx";
+
+interface ChatState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  error?: string;
+}
 
 export default function FloatingChat() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
+  const [chatState, setChatState] = useState<ChatState>({ status: 'idle' });
+
+  const isValid = email.trim() !== "" && message.trim() !== "" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async () => {
-    console.log("hello world");
-    setSending(true);
-    if (!email || !message) {
-      alert("Please fill in both fields.");
-      setSending(false);
-      return;
-    }
+    if (!isValid) return;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      alert("Please enter a valid email address.");
-      setSending(false);
-      return;
-    }
+    setChatState({ status: 'loading' });
 
     try {
       const response = await fetch(
@@ -33,76 +30,152 @@ export default function FloatingChat() {
       );
 
       if (response.ok) {
-        setSending(false);
-        alert("Message sent successfully!");
+        setChatState({ status: 'success' });
         setEmail("");
         setMessage("");
-        setOpen(false);
+        setTimeout(() => {
+          setOpen(false);
+          setChatState({ status: 'idle' });
+        }, 2000);
       } else {
         const res = await response.json();
-        alert("Failed to send message: " + res.error);
-        setSending(false);
+        setChatState({ 
+          status: 'error', 
+          error: res.error || 'Failed to send message' 
+        });
       }
     } catch (error) {
       console.error(error);
-      setSending(false);
-      alert("Something went wrong.");
+      setChatState({ 
+        status: 'error', 
+        error: 'Something went wrong. Please try again.' 
+      });
     }
   };
 
   return (
-    <div className="fixed bottom-6 flex justify-baseline items-end gap-6 right-6 z-50">
+    <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-4">
       {/* Chat form */}
       {open && (
-        <div className=" bg-white p-6 rounded-xl shadow-xl w-72">
-          <h3 className="text-2xl font-semibold mb-4">Send us a message</h3>
-          <input
-            type="email"
-            placeholder="Your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full mb-2 p-2 border border-gray-300 rounded"
-          />
-          <textarea
-            placeholder="Your message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="w-full mb-2 p-2 border border-gray-300 rounded"
-            rows={3}
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={sending}
-            className="w-full cursor-pointer disabled:bg-gray-300 bg-brand text-white py-2 rounded hover:bg-brand-dark"
-          >
-            Send
-          </button>
+        <div className="w-[90vw] max-w-[360px] bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 animate-slideUp">
+          <div className="bg-brand/5 p-4 border-b border-brand/10">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-medium text-gray-800">Send us a message</h3>
+              <button 
+                onClick={() => setOpen(false)}
+                className="p-1 hover:bg-brand/10 rounded-full transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-4">
+            <div>
+              <input
+                type="email"
+                placeholder="Your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={clsx(
+                  "w-full p-3 border rounded-lg outline-none transition-colors",
+                  "focus:border-brand focus:ring-1 focus:ring-brand/20",
+                  chatState.status === 'error' ? "border-red-300" : "border-gray-200"
+                )}
+              />
+            </div>
+            <div>
+              <textarea
+                placeholder="Your message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className={clsx(
+                  "w-full p-3 border rounded-lg outline-none transition-colors resize-none",
+                  "focus:border-brand focus:ring-1 focus:ring-brand/20",
+                  chatState.status === 'error' ? "border-red-300" : "border-gray-200"
+                )}
+                rows={4}
+              />
+            </div>
+
+            {chatState.status === 'error' && (
+              <div className="text-sm text-red-500 bg-red-50 p-3 rounded-lg">
+                {chatState.error}
+              </div>
+            )}
+
+            {chatState.status === 'success' && (
+              <div className="text-sm text-green-500 bg-green-50 p-3 rounded-lg">
+                Message sent successfully! Thank you for reaching out.
+              </div>
+            )}
+
+            <button
+              onClick={handleSubmit}
+              disabled={!isValid || chatState.status === 'loading'}
+              className={clsx(
+                "w-full p-3 rounded-lg font-medium transition-all duration-200",
+                "flex items-center justify-center gap-2",
+                isValid && chatState.status !== 'loading'
+                  ? "bg-brand text-white hover:bg-brand/90"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              )}
+            >
+              {chatState.status === 'loading' ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>Sending...</span>
+                </>
+              ) : (
+                "Send message"
+              )}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Chat button */}
       <button
         onClick={() => setOpen(!open)}
-        className="bg-brand hover:bg-brand-dark h-max cursor-pointer text-white p-4 rounded-full shadow-lg"
+        className={clsx(
+          "bg-brand hover:bg-brand/90 text-white p-3 sm:p-4 rounded-full shadow-lg transition-all duration-200",
+          "hover:shadow-xl hover:-translate-y-0.5",
+          "focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+        )}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="2em"
-          height="2em"
-          viewBox="0 0 24 24"
-        >
-          <path
-            fill="currentColor"
-            d="M21 12.22C21 6.73 16.74 3 12 3c-4.69 0-9 3.65-9 9.28c-.6.34-1 .98-1 1.72v2c0 1.1.9 2 2 2c.55 0 1-.45 1-1v-4.81c0-3.83 2.95-7.18 6.78-7.29a7.007 7.007 0 0 1 7.22 7V19h-7c-.55 0-1 .45-1 1s.45 1 1 1h7c1.1 0 2-.9 2-2v-1.22c.59-.31 1-.92 1-1.64v-2.3c0-.7-.41-1.31-1-1.62"
-          />
-          <circle cx="9" cy="13" r="1" fill="currentColor" />
-          <circle cx="15" cy="13" r="1" fill="currentColor" />
-          <path
-            fill="currentColor"
-            d="M18 11.03A6.04 6.04 0 0 0 12.05 6c-3.03 0-6.29 2.51-6.03 6.45a8.07 8.07 0 0 0 4.86-5.89c1.31 2.63 4 4.44 7.12 4.47"
-          />
-        </svg>
+        {open ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+          </svg>
+        )}
       </button>
     </div>
   );
 }
+
+// Add this to your global CSS file (src/index.css)
+/*
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.2s ease-out;
+}
+*/

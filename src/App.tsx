@@ -48,8 +48,11 @@ function MainApp() {
       return;
     }
 
+    if (!auth.user?.verified) {
+      return;
+    }
+
     if (findATrip) {
-      // Find trips
       dispatch(
         findTrips({
           origin: trip.origin,
@@ -58,12 +61,11 @@ function MainApp() {
         })
       );
     } else {
-      // Create trip
       if (!auth.user) return;
 
       dispatch(
         createTrip({
-          userId: auth.user.id, // Changed from $id to id for Supabase
+          userId: auth.user.id,
           origin: trip.origin,
           destination: trip.destination,
           tripDate: trip.tripDate,
@@ -74,9 +76,6 @@ function MainApp() {
 
   const isFormValid = trip.origin && trip.destination && trip.tripDate;
 
-  // Check if user email is verified - handle the case where user might be null
-  const isverified = auth.user?.verified ?? false;
-
   return (
     <main>
       <Navbar />
@@ -85,13 +84,13 @@ function MainApp() {
       {auth.showAuth === "signin" && <Signin />}
       {auth.showAuth === "forgotPassword" && <ForgotPassword />}
 
-      <section className="h-[100vh] flex justify-center w-[100vw] relative overflow-clip">
+      <section className="min-h-screen pt-[5rem] flex justify-center w-full relative overflow-clip">
         <img
           src="./assets/herobkg.png"
-          className="absolute object-cover h-full w-full"
+          className="absolute object-cover top-0 h-full w-full"
           alt="map route image"
         />
-        <div className="relative space-y-4 px-8 top-[50%] h-min flex flex-col justify-center items-center -translate-y-[50%]">
+        <div className="relative space-y-4 px-8 py-20 h-min flex flex-col justify-center items-center">
           <h1 className="lg:w-[60%] leading-tight font-medium text-4xl lg:text-7xl text-center">
             Cut costs on your next inter-city trip with{" "}
             <br className="hidden lg:block" />
@@ -133,7 +132,7 @@ function MainApp() {
         id="trip"
         className="my-32 flex flex-col justify-center gap-20 px-10"
       >
-        {auth.isAuthenticated && auth.user && !isverified && (
+        {auth.isAuthenticated && auth.user && !auth.user.verified && (
           <EmailVerification />
         )}
 
@@ -179,98 +178,75 @@ function MainApp() {
           </div>
 
           <div className="w-full max-w-md">
-            {auth.isAuthenticated ? (
-              <div className="flex flex-col justify-center items-center gap-4 w-full">
-                <input
-                  placeholder="from -> eg. Enugu"
-                  type="text"
-                  value={trip.origin}
-                  onChange={(e) =>
-                    dispatch(
-                      updateTripField({
-                        field: "origin",
-                        value: e.target.value,
-                      })
-                    )
-                  }
-                  className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
-                />
-                <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
-                <input
-                  placeholder="to -> eg. Abuja"
-                  type="text"
-                  value={trip.destination}
-                  onChange={(e) =>
-                    dispatch(
-                      updateTripField({
-                        field: "destination",
-                        value: e.target.value,
-                      })
-                    )
-                  }
-                  className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
-                />
-                <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
-                <input
-                  placeholder="date"
-                  type="date"
-                  value={trip.tripDate}
-                  onChange={(e) =>
-                    dispatch(
-                      updateTripField({
-                        field: "tripDate",
-                        value: e.target.value,
-                      })
-                    )
-                  }
-                  className="outline-none bg-white py-2 min-w-full w-full border border-light-gray px-3 rounded-lg"
-                />
-              </div>
-            ) : (
-              <div className="flex flex-col justify-center items-center gap-4 w-full">
-                <input
-                  placeholder="from -> eg. Enugu"
-                  type="text"
-                  disabled
-                  className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg opacity-70"
-                />
-                <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
-                <input
-                  placeholder="to -> eg. Abuja"
-                  type="text"
-                  disabled
-                  className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg opacity-70"
-                />
-                <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
-                <input
-                  placeholder="date"
-                  type="date"
-                  disabled
-                  className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg opacity-70"
-                />
-              </div>
-            )}
-
-            <button
-              onClick={handleTripAction}
-              disabled={
-                !auth.isAuthenticated ||
-                !isFormValid ||
-                trip.isLoading ||
-                (auth.isAuthenticated && !isverified)
-              }
-              className="w-max px-8 float-right mt-6 text-base sm:text-lg py-2 rounded-lg disabled:bg-light-gray cursor-pointer bg-brand text-white"
-            >
-              {!auth.isAuthenticated
-                ? "Login to continue"
-                : !isverified
-                ? "Verify email first"
-                : trip.isLoading
-                ? "Processing..."
-                : findATrip
-                ? "Search"
-                : "Create"}
-            </button>
+            <div className="flex flex-col justify-center items-center gap-4 w-full">
+              <input
+                placeholder="from -> eg. Enugu"
+                type="text"
+                value={trip.origin}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({
+                      field: "origin",
+                      value: e.target.value,
+                    })
+                  )
+                }
+                className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
+              />
+              <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
+              <input
+                placeholder="to -> eg. Abuja"
+                type="text"
+                value={trip.destination}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({
+                      field: "destination",
+                      value: e.target.value,
+                    })
+                  )
+                }
+                className="outline-none bg-white py-2 w-full border border-light-gray px-3 rounded-lg"
+              />
+              <div className="h-[2rem] border-r w-0 border-dotted text-light-gray" />
+              <input
+                placeholder="date"
+                type="date"
+                value={trip.tripDate}
+                onChange={(e) =>
+                  dispatch(
+                    updateTripField({
+                      field: "tripDate",
+                      value: e.target.value,
+                    })
+                  )
+                }
+                className="outline-none bg-white py-2 min-w-full w-full border border-light-gray px-3 rounded-lg"
+              />
+              <button
+                onClick={handleTripAction}
+                disabled={!isFormValid || trip.isLoading}
+                className={clsx(
+                  "w-full py-2 rounded-lg text-white",
+                  !isFormValid || trip.isLoading
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-brand cursor-pointer"
+                )}
+              >
+                {trip.isLoading
+                  ? "Processing..."
+                  : !auth.user?.verified && auth.isAuthenticated
+                  ? "Verify email first"
+                  : findATrip
+                  ? "Search"
+                  : "Create Trip"}
+              </button>
+              {!auth.isAuthenticated && isFormValid && (
+                <p className="text-sm text-gray-600 text-center">
+                  You'll need to sign in to {findATrip ? "search" : "create"} trips
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
