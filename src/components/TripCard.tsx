@@ -25,6 +25,8 @@ function TripCard({
     });
   };
 
+  console.log("phoneNumber: ", phoneNumber);
+
   // Determine time of day
   const getTimeOfDay = (dateString: string) => {
     const date = new Date(dateString);

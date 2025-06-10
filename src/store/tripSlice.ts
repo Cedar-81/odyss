@@ -87,16 +87,44 @@ export const fetchTrips = createAsyncThunk(
   "trip/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const { data, error } = await supabase
+      const { data: trips, error } = await supabase
         .from("Trips")
-        .select("*, userId(phoneNumber)")
+        .select(`*`)
         .order("created_at", { ascending: false });
-
-      console.log("trips data: ", data);
 
       if (error) throw error;
 
-      return data || [];
+      if (!trips || trips.length === 0) return [];
+
+      console.log("trips: ", trips);
+
+      const userIds = trips.map((trip) => trip.userId).filter(Boolean);
+      console.log("userIds: ", userIds);
+
+      // Fetch user details for each trip
+      const { data: users, error: usersError } = await supabase
+        .from("Users")
+        .select("id, phoneNumber")
+        .in("id", userIds);
+
+      console.log("users: ", users);
+
+      if (usersError) throw usersError;
+
+      // Map users to their trips
+      const tripsWithPhoneNumbers = trips.map(trip => {
+        const user = users?.find(u => u.id === trip.userId);
+        return {
+          ...trip,
+          userId: {
+            phoneNumber: user?.phoneNumber || ""
+          }
+        };
+      });
+
+      console.log("tripsWithPhoneNumbers: ", tripsWithPhoneNumbers);
+
+      return tripsWithPhoneNumbers;
     } catch (error) {
       return rejectWithValue(((error as unknown) as any).message);
     }
