@@ -50,36 +50,170 @@ const features = [
 ];
 
 export default function WaitlistLanding() {
-  const [form, setForm] = useState({ name: "", email: "", whatsapp: "" });
+  const [form, setForm] = useState({ 
+    name: "", 
+    email: "", 
+    whatsapp: "",
+    isGodfreyStudent: false,
+    origin: "",
+    destination: "",
+    schoolRegNo: ""
+  });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+
+  // Validation functions
+  const validateName = (name: string) => {
+    if (!name.trim()) return "Name is required";
+    if (name.trim().length < 2) return "Name must be at least 2 characters";
+    if (name.trim().length > 50) return "Name must be less than 50 characters";
+    if (!/^[a-zA-Z\s]+$/.test(name.trim())) return "Name can only contain letters and spaces";
+    return "";
+  };
+
+  const validateEmail = (email: string) => {
+    if (!email.trim()) return "Email is required";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    return "";
+  };
+
+  const validateWhatsApp = (whatsapp: string) => {
+    if (!whatsapp.trim()) return "WhatsApp number is required";
+    // Remove all non-digit characters for validation
+    const cleanNumber = whatsapp.replace(/\D/g, '');
+    if (cleanNumber.length < 10) return "WhatsApp number must be at least 10 digits";
+    if (cleanNumber.length > 15) return "WhatsApp number must be less than 15 digits";
+    return "";
+  };
+
+  const validateOrigin = (origin: string) => {
+    if (!origin.trim()) return "Origin is required";
+    if (origin.trim().length < 2) return "Origin must be at least 2 characters";
+    if (origin.trim().length > 100) return "Origin must be less than 100 characters";
+    return "";
+  };
+
+  const validateDestination = (destination: string) => {
+    if (!destination.trim()) return "Destination is required";
+    if (destination.trim().length < 2) return "Destination must be at least 2 characters";
+    if (destination.trim().length > 100) return "Destination must be less than 100 characters";
+    return "";
+  };
+
+  const validateSchoolRegNo = (schoolRegNo: string) => {
+    if (!schoolRegNo.trim()) return "School registration number is required";
+    if (schoolRegNo.trim().length < 3) return "School registration number must be at least 3 characters";
+    if (schoolRegNo.trim().length > 20) return "School registration number must be less than 20 characters";
+    return "";
+  };
+
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    errors.name = validateName(form.name);
+    errors.email = validateEmail(form.email);
+    errors.whatsapp = validateWhatsApp(form.whatsapp);
+    
+    if (form.isGodfreyStudent) {
+      errors.origin = validateOrigin(form.origin);
+      errors.destination = validateDestination(form.destination);
+      errors.schoolRegNo = validateSchoolRegNo(form.schoolRegNo);
+    }
+    
+    setValidationErrors(errors);
+    return !Object.values(errors).some(error => error !== "");
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    const newForm = { 
+      ...form, 
+      [name]: type === 'checkbox' ? checked : value 
+    };
+    setForm(newForm);
+    
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({ ...prev, [name]: "" }));
+    }
+    
+    // Real-time validation for non-checkbox fields
+    if (type !== 'checkbox') {
+      let error = "";
+      switch (name) {
+        case 'name':
+          error = validateName(value);
+          break;
+        case 'email':
+          error = validateEmail(value);
+          break;
+        case 'whatsapp':
+          error = validateWhatsApp(value);
+          break;
+        case 'origin':
+          error = validateOrigin(value);
+          break;
+        case 'destination':
+          error = validateDestination(value);
+          break;
+        case 'schoolRegNo':
+          error = validateSchoolRegNo(value);
+          break;
+      }
+      setValidationErrors(prev => ({ ...prev, [name]: error }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      setError("Please fix the validation errors below.");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     setSuccess(false);
     try {
       const { error: supabaseError } = await supabase.from("Waitlist").insert([
         {
-          name: form.name,
-          email: form.email,
-          whatsapp: form.whatsapp,
+          name: form.name.trim(),
+          email: form.email.trim().toLowerCase(),
+          whatsapp: form.whatsapp.trim(),
+          is_godfrey_student: form.isGodfreyStudent,
+          origin: form.isGodfreyStudent ? form.origin.trim() : null,
+          destination: form.isGodfreyStudent ? form.destination.trim() : null,
+          school_reg_no: form.isGodfreyStudent ? form.schoolRegNo.trim() : null,
         },
       ]);
       if (supabaseError) throw supabaseError;
       setSuccess(true);
-      setForm({ name: "", email: "", whatsapp: "" });
+      setForm({ 
+        name: "", 
+        email: "", 
+        whatsapp: "",
+        isGodfreyStudent: false,
+        origin: "",
+        destination: "",
+        schoolRegNo: ""
+      });
+      setValidationErrors({});
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const isFormValid = () => {
+    const hasRequiredFields = form.name && form.email && form.whatsapp;
+    const hasGodfreyFields = !form.isGodfreyStudent || (form.origin && form.destination && form.schoolRegNo);
+    const hasNoErrors = !Object.values(validationErrors).some(error => error !== "");
+    return hasRequiredFields && hasGodfreyFields && hasNoErrors;
   };
 
   return (
@@ -96,8 +230,8 @@ export default function WaitlistLanding() {
         />
       ))}
 
-      <main className="relative z-10 flex flex-col items-center justify-center w-full px-8 pt-20 min-h-screen">
-        <div className="max-w-2xl w-full text-center mx-auto mb-12">
+      <main className="relative z-10 flex flex-col items-center justify-center w-full px-4 sm:px-8 pt-16 sm:pt-20 pb-8 min-h-screen">
+        <div className="max-w-2xl w-full text-center mx-auto mb-8 sm:mb-12">
           <div className="space-y-2 md:space-y-6">
             <div className="flex items-center gap-4 md:mb-6">
               <svg height="54" className="h-4 md:h-5" viewBox="0 0 175 54" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -110,7 +244,7 @@ export default function WaitlistLanding() {
                 <path d="M42.7731 20.6739C42.773 24.866 41.8743 28.4826 40.0764 31.5233C38.2964 34.582 35.797 36.9389 32.5788 38.5942C29.3784 40.2495 25.6386 41.0769 21.3596 41.0769C19.1855 41.0769 17.146 40.8589 15.241 40.4243L15.241 34.6855L11.7991 34.6855L11.7991 39.3438C11.2962 39.1385 10.8046 38.9154 10.3243 38.6737L10.3243 25.2645C10.3868 25.3457 10.4511 25.426 10.5177 25.5048C11.6144 26.7822 13.1067 27.7446 14.9944 28.3923C16.8823 29.0581 19.031 29.3909 21.4403 29.3909C23.8495 29.3909 25.9982 29.0581 27.8861 28.3923C29.7738 27.7446 31.2662 26.7822 32.3629 25.5048C33.4596 24.2274 34.0078 22.6348 34.0078 20.7277C34.0078 18.8025 33.4596 17.1832 32.3629 15.8698C31.2662 14.5744 29.7739 13.5935 27.8861 12.9278C25.9982 12.2801 23.8495 11.9561 21.4403 11.9561C19.031 11.9561 16.8823 12.2801 14.9944 12.9278C13.1067 13.5935 11.6144 14.5744 10.5177 15.8698C10.4511 15.9508 10.3867 16.033 10.3243 16.1163L10.3243 2.67341C10.8046 2.43166 11.2962 2.20857 11.7991 2.0033L11.7991 8.62809L15.241 8.62809L15.241 0.922735C17.146 0.488185 19.1855 0.270142 21.3596 0.270142C25.6386 0.270161 29.3784 1.09759 32.5788 2.75287C35.7971 4.40816 38.2964 6.7562 40.0764 9.79688C41.8743 12.8556 42.7731 16.4816 42.7731 20.6739Z" fill="white"/>
               </svg>
               <p className="text-gray-200 font-bold">|</p> 
-              <p className="text-gray-200 text-xs md:text-sm">...because journeys are better shared</p> 
+              <p className="text-gray-200 text-xs md:text-sm">...because journeys are better shared</p> 
             </div>
             <h1 className="text-white text-3xl sm:text-4xl text-left md:text-5xl font-medium mt-5 lg:mt-0 leading-tight">
               Your Next Trip, Sorted — Together.
@@ -121,46 +255,170 @@ export default function WaitlistLanding() {
           </div>
           <form
             onSubmit={handleSubmit}
-            className="backdrop-blur-md rounded-2xl flex flex-col gap-4 items-center mt-10 mx-auto shadow-lg"
+            className="backdrop-blur-md rounded-2xl flex flex-col gap-4 items-center mt-8 sm:mt-10 mx-auto shadow-lg"
             // style={{ boxShadow: "0 4px 32px 0 rgba(245,0,139,0.08)" }}
           >
             <div className="flex flex-col md:flex-row gap-4 w-full">
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="your name"
-                className="w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border border-white/20 focus:border-white/30 outline-none transition"
-                required
-              />
+              <div className="w-full">
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="your name"
+                  className={`w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border outline-none transition ${
+                    validationErrors.name 
+                      ? 'border-red-400 focus:border-red-400' 
+                      : 'border-white/20 focus:border-white/30'
+                  }`}
+                  required
+                />
+                {validationErrors.name && (
+                  <p className="text-red-400 text-xs mt-1 text-left">{validationErrors.name}</p>
+                )}
+              </div>
 
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="email address"
-                className="w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border border-white/20 focus:border-white/30 outline-none transition"
-                required
-              />
-              <input
-                type="tel"
-                name="whatsapp"
-                value={form.whatsapp}
-                onChange={handleChange}
-                placeholder="whatsapp line"
-                className="w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border border-white/20 focus:border-white/30 outline-none transition"
-                required
-              />
+              <div className="w-full">
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="email address"
+                  className={`w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border outline-none transition ${
+                    validationErrors.email 
+                      ? 'border-red-400 focus:border-red-400' 
+                      : 'border-white/20 focus:border-white/30'
+                  }`}
+                  required
+                />
+                {validationErrors.email && (
+                  <p className="text-red-400 text-xs mt-1 text-left">{validationErrors.email}</p>
+                )}
+              </div>
+
+              <div className="w-full">
+                <input
+                  type="tel"
+                  name="whatsapp"
+                  value={form.whatsapp}
+                  onChange={handleChange}
+                  placeholder="whatsapp line"
+                  className={`w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border outline-none transition ${
+                    validationErrors.whatsapp 
+                      ? 'border-red-400 focus:border-red-400' 
+                      : 'border-white/20 focus:border-white/30'
+                  }`}
+                  required
+                />
+                {validationErrors.whatsapp && (
+                  <p className="text-red-400 text-xs mt-1 text-left">{validationErrors.whatsapp}</p>
+                )}
+              </div>
             </div>
+
+            {/* Custom Godfrey Okoye Student Selector */}
+            <div className="w-full p-4 rounded-lg border border-white/20 hover:border-white/30 transition-colors cursor-pointer" onClick={() => setForm({...form, isGodfreyStudent: !form.isGodfreyStudent})}>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    name="isGodfreyStudent"
+                    checked={form.isGodfreyStudent}
+                    onChange={handleChange}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
+                    form.isGodfreyStudent 
+                      ? 'border-white bg-white' 
+                      : 'border-white/30 hover:border-white/50'
+                  }`}>
+                    {form.isGodfreyStudent && (
+                      <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <label className="text-white text-left text-sm font-medium cursor-pointer select-none">
+                  Are you a Godfrey Okoye University Student?
+                </label>
+              </div>
+            </div>
+            <p className="text-xs text-white text-left w-full -mt-2">Please fill this for special GOU students access</p>
+
+            {/* Conditional Form Fields for Godfrey Students */}
+            {form.isGodfreyStudent && (
+              <div className="w-full space-y-4 p-4 rounded-lg border border-white/20 bg-white/5 animate-in slide-in-from-top-2 duration-300">
+                <h3 className="text-white text-left text-sm font-medium mb-3">
+                  Where will you be heading to after school closes?
+                </h3>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full">
+                    <input
+                      type="text"
+                      name="origin"
+                      value={form.origin}
+                      onChange={handleChange}
+                      placeholder="Origin (e.g Enugu)"
+                      className={`w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border outline-none transition ${
+                        validationErrors.origin 
+                          ? 'border-red-400 focus:border-red-400' 
+                          : 'border-white/20 focus:border-white/30'
+                      }`}
+                      required={form.isGodfreyStudent}
+                    />
+                    {validationErrors.origin && (
+                      <p className="text-red-400 text-xs mt-1 text-left">{validationErrors.origin}</p>
+                    )}
+                  </div>
+                  <div className="w-full">
+                    <input
+                      type="text"
+                      name="destination"
+                      value={form.destination}
+                      onChange={handleChange}
+                      placeholder="Destination (e.g Abuja)"
+                      className={`w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border outline-none transition ${
+                        validationErrors.destination 
+                          ? 'border-red-400 focus:border-red-400' 
+                          : 'border-white/20 focus:border-white/30'
+                      }`}
+                      required={form.isGodfreyStudent}
+                    />
+                    {validationErrors.destination && (
+                      <p className="text-red-400 text-xs mt-1 text-left">{validationErrors.destination}</p>
+                    )}
+                  </div>
+                  <div className="w-full">
+                    <input
+                      type="text"
+                      name="schoolRegNo"
+                      value={form.schoolRegNo}
+                      onChange={handleChange}
+                      placeholder="School Reg No"
+                      className={`w-full px-4 py-3 text-sm rounded-lg focus:bg-white/5 text-white placeholder-gray-300 border outline-none transition ${
+                        validationErrors.schoolRegNo 
+                          ? 'border-red-400 focus:border-red-400' 
+                          : 'border-white/20 focus:border-white/30'
+                      }`}
+                      required={form.isGodfreyStudent}
+                    />
+                    {validationErrors.schoolRegNo && (
+                      <p className="text-red-400 text-xs mt-1 text-left">{validationErrors.schoolRegNo}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading || !form.name || !form.email || !form.whatsapp}
+              disabled={loading || !isFormValid()}
               className={`w-full py-3 rounded-lg font-medium cursor-pointer text-lg transition-all mt-2
-                ${loading || !form.name || !form.email || !form.whatsapp
+                ${loading || !isFormValid()
                   ? "bg-gray-500 text-gray-200 cursor-not-allowed"
-                  : "bg-white text-black shadow-lg"}
+                  : "bg-white text-black shadow-lg hover:bg-gray-100 active:scale-[0.98]"}
               `}
             >
               {loading ? "Joining..." : success ? "Joined!" : "Join the Waitlist"}
@@ -170,7 +428,7 @@ export default function WaitlistLanding() {
           </form>
         </div>
 
-        <div className="w-full max-w-4xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 z-10">
+        <div className="w-full max-w-4xl mx-auto mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 z-10">
           {features.map((f, i) => (
             <div
               key={i}
@@ -178,7 +436,7 @@ export default function WaitlistLanding() {
               className="backdrop-blur-md rounded-2xl p-6 text-white shadow-md border border-white/5 flex flex-col h-full"
             >
               <h3 className="text-xl mb-3 text-gray-200">{f.title}</h3>
-              <p className="text-gray-200 text-xs font-light text-gray-300">{f.text}</p>
+              <p className="text-xs font-light text-gray-300">{f.text}</p>
             </div>
           ))}
         </div>
