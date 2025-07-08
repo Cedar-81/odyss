@@ -45,7 +45,7 @@ function App() {
               </defs>
             </svg>
 
-            {/* <img src="./mockup.png" alt="" className="w-full max-w-md sm:max-w-lg lg:hidden md:max-w-xl lg:w-[47rem] mx-auto lg:absolute lg:-bottom-[30rem] lg:translate-x-[50%] lg:right-[50%] animate-float" /> */}
+            <img src="./mockup.png" alt="" className="w-full max-w-md sm:max-w-lg lg:hidden md:max-w-xl lg:w-[47rem] mx-auto lg:absolute lg:-bottom-[30rem] lg:translate-x-[50%] lg:right-[50%] animate-float" />
             <img src="./mockup.png" alt="" className="lg:w-[47rem] mx-auto hidden lg:block lg:absolute lg:-bottom-[30rem] lg:translate-x-[50%] lg:right-[50%] animate-float" />
           </div>
           <div className="w-full lg:w-[25em] space-y-3 order-3 mt-8 pb-6 lg:pb-0 lg:mt-0 animate-fade-in-up">
