@@ -30,8 +30,8 @@ function App() {
           <div className="relative space-y-6 md:space-y-8 lg:bottom-10 order-2 lg:order-1 mt-8 lg:mt-0 animate-fade-in-left">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl w-full lg:w-[10em] relative font-medium leading-tight"><span className="text-white/70">Booking &</span> <br />planning group trips have never been <span className="text-[#E03E1A] animate-pulse-slow">easier</span></h1>     
             <div className="flex flex-col sm:flex-row gap-3">
-              <a href="https://travel.odyss.ng/rides" target="_blank"><button className="py-3 relative z-30 cursor-pointer px-6 md:px-8 bg-[#E03E1A] rounded-full text-white text-sm md:text-base hover-glow hover-scale">Start a trip</button></a>
-              <a href="https://travel.odyss.ng/circles" target="_blank"><button className="py-3 relative z-30 cursor-pointer px-6 md:px-8 border border-[#E03E1A] rounded-full text-white text-sm md:text-base hover-lift">Start a circle</button></a>
+              <a href="https://travel.odyss.ng/rides" target="_blank" className="w-full sm:w-auto"><button className="w-full py-3 relative z-30 cursor-pointer px-6 md:px-8 bg-[#E03E1A] rounded-full text-white text-sm md:text-base hover-glow hover-scale">Start a trip</button></a>
+              <a href="https://travel.odyss.ng/circles" target="_blank" className="w-full sm:w-auto"><button className="w-full py-3 relative z-30 cursor-pointer px-6 md:px-8 border border-[#E03E1A] rounded-full text-white text-sm md:text-base hover-lift">Start a circle</button></a>
             </div>
           </div>
           <div className="h-full order-1 lg:order-2 w-full lg:w-auto">
