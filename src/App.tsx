@@ -17,12 +17,12 @@ function App() {
           </svg>
 
           <ul className="hidden sm:flex gap-2 md:gap-4 items-center text-sm md:text-base">
-            <li className="cursor-pointer hover-lift">Create trip</li>
+            <a href="https://travel.odyss.ng/curate-trip" target="_blank"><li className="cursor-pointer hover-lift">Create trip</li></a>
             <div className="border h-6"></div>
-            <li className="cursor-pointer hover-lift">Join a trip</li>
+            <a href="https://travel.odyss.ng/rides" target="_blank"><li className="cursor-pointer hover-lift">Join a trip</li></a>
           </ul>
 
-          <button className="py-2 px-4 md:px-7 bg-[#E03E1A] rounded-full text-white text-sm md:text-base hover-glow hover-scale">Signup</button>
+          <a href="https://travel.odyss.ng/signup" target="_blank"><button className="py-2 px-4 md:px-7 bg-[#E03E1A] rounded-full text-white text-sm md:text-base hover-glow hover-scale">Signup</button></a>
         </nav>
       </header>
       <main className="">
@@ -30,8 +30,8 @@ function App() {
           <div className="relative space-y-6 md:space-y-8 lg:bottom-10 order-2 lg:order-1 mt-8 lg:mt-0 animate-fade-in-left">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl w-full lg:w-[10em] relative font-medium leading-tight"><span className="text-white/70">Booking &</span> <br />planning group trips have never been <span className="text-[#E03E1A] animate-pulse-slow">easier</span></h1>     
             <div className="flex flex-col sm:flex-row gap-3">
-              <button className="py-3 relative z-30 cursor-pointer px-6 md:px-8 bg-[#E03E1A] rounded-full text-white text-sm md:text-base hover-glow hover-scale">Start a trip</button>
-              <button className="py-3 relative z-30 cursor-pointer px-6 md:px-8 border border-[#E03E1A] rounded-full text-white text-sm md:text-base hover-lift">Start a circle</button>
+              <a href="https://travel.odyss.ng/rides" target="_blank"><button className="py-3 relative z-30 cursor-pointer px-6 md:px-8 bg-[#E03E1A] rounded-full text-white text-sm md:text-base hover-glow hover-scale">Start a trip</button></a>
+              <a href="https://travel.odyss.ng/circles" target="_blank"><button className="py-3 relative z-30 cursor-pointer px-6 md:px-8 border border-[#E03E1A] rounded-full text-white text-sm md:text-base hover-lift">Start a circle</button></a>
             </div>
           </div>
           <div className="h-full order-1 lg:order-2 w-full lg:w-auto">
